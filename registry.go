@@ -1,5 +1,9 @@
 package interceptor
 
+import (
+	"log"
+)
+
 // Registry is a collector for interceptors.
 type Registry struct {
 	factories []Factory
@@ -12,6 +16,9 @@ func (r *Registry) Add(f Factory) {
 
 // Build constructs a single Interceptor from a InterceptorRegistry
 func (r *Registry) Build(id string) (Interceptor, error) {
+
+	log.Printf("#-> Registry::Build()\n")
+
 	if len(r.factories) == 0 {
 		return &NoOp{}, nil
 	}
@@ -25,6 +32,6 @@ func (r *Registry) Build(id string) (Interceptor, error) {
 
 		interceptors = append(interceptors, i)
 	}
-
+	log.Printf("<-# Registry::Build()\n")
 	return NewChain(interceptors), nil
 }

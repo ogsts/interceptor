@@ -2,12 +2,12 @@ package gcc
 
 import (
 	"errors"
-	"sync"
-	"time"
-
 	"github.com/pion/interceptor"
 	"github.com/pion/rtcp"
 	"github.com/pion/rtp"
+	"log"
+	"sync"
+	"time"
 )
 
 const twccExtensionAttributesKey = iota
@@ -69,6 +69,9 @@ func (f *InterceptorFactory) OnNewPeerConnection(cb NewPeerConnectionCallback) {
 
 // NewInterceptor returns a new GCC interceptor
 func (f *InterceptorFactory) NewInterceptor(id string) (interceptor.Interceptor, error) {
+
+	log.Printf("#-> InterceptorFactory::NewInterceptor() id=%s \n", id)
+
 	i := &Interceptor{
 		NoOp:            interceptor.NoOp{},
 		lock:            sync.Mutex{},
@@ -100,6 +103,8 @@ func (f *InterceptorFactory) NewInterceptor(id string) (interceptor.Interceptor,
 	if f.addPeerConnection != nil {
 		f.addPeerConnection(id, i)
 	}
+
+	log.Printf("<-# InterceptorFactory::NewInterceptor() id=%s \n", id)
 	return i, nil
 }
 
@@ -178,6 +183,9 @@ func (c *Interceptor) BindRTCPReader(reader interceptor.RTCPReader) interceptor.
 // BindLocalStream lets you modify any outgoing RTP packets. It is called once
 // for per LocalStream. The returned method will be called once per rtp packet.
 func (c *Interceptor) BindLocalStream(info *interceptor.StreamInfo, writer interceptor.RTPWriter) interceptor.RTPWriter {
+
+	log.Printf("    Interceptor::BindLocalStream()  =================================\n")
+
 	var hdrExtID uint8
 	for _, e := range info.RTPHeaderExtensions {
 		if e.URI == transportCCURI {
@@ -221,10 +229,16 @@ func (c *Interceptor) Close() error {
 }
 
 func (c *Interceptor) loop() {
+
+	log.Printf("#-> Interceptor::loop()\n")
+
 	ticker := time.NewTicker(200 * time.Millisecond)
 	for {
 		select {
 		case <-c.close:
+
+			log.Printf("    Interceptor::loop() Interceptor closed ? =================================\n")
+			return
 		case pkt := <-c.packet:
 			_, err := c.pacer.Write(&pkt.header, pkt.payload, pkt.attributes)
 			if err != nil {
@@ -255,4 +269,5 @@ func (c *Interceptor) loop() {
 			}
 		}
 	}
+	log.Printf("<-# Interceptor::loop()\n")
 }

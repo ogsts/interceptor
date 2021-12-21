@@ -1,11 +1,11 @@
 package gcc
 
 import (
+	"github.com/pion/logging"
+	"log"
 	"math"
 	"sync"
 	"time"
-
-	"github.com/pion/logging"
 )
 
 type lossBasedBandwidthEstimator struct {
@@ -67,7 +67,7 @@ func (e *lossBasedBandwidthEstimator) updateLossStats(results []Acknowledgment) 
 	increaseLoss := math.Max(e.averageLoss, lossRatio)
 	decreaseLoss := math.Min(e.averageLoss, lossRatio)
 
-	e.log.Infof("averageLoss: %v, decreaseLoss: %v, increaseLoss: %v", e.averageLoss, decreaseLoss, increaseLoss)
+	log.Printf("averageLoss: %v, decreaseLoss: %v, increaseLoss: %v \n", e.averageLoss, decreaseLoss, increaseLoss)
 
 	if increaseLoss < 0.02 && time.Since(e.lastIncrease) > 200*time.Millisecond {
 		e.lastIncrease = time.Now()
